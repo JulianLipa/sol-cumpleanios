@@ -95,7 +95,7 @@
   .opt{background:rgba(255,255,255,.06);border:1px solid rgba(255,211,110,.25);color:#fff;
     font-family:inherit;font-size:15px;font-weight:500;padding:14px 16px;border-radius:14px;cursor:pointer;
     transition:.2s;text-align:left}
-  .opt:hover{background:rgba(255,122,24,.18);border-color:var(--oro)}
+  @media(hover:hover){.opt:hover{background:rgba(255,122,24,.18);border-color:var(--oro)}}
   .opt.correct{background:linear-gradient(90deg,rgba(90,255,138,.3),rgba(34,211,111,.25));border-color:#5aff8a;color:#eafff0}
   .opt.wrong{background:rgba(255,46,80,.25);border-color:#ff5069}
   .opt:disabled{cursor:default}
@@ -162,7 +162,8 @@
   .fecha-big{margin:2px 0 6px;display:flex;align-items:baseline;justify-content:center;gap:7px}
   .fecha-big .d{font-family:'Anton';font-size:42px;color:#fff;text-shadow:0 0 20px var(--magenta)}
   .fecha-big .m{font-family:'Anton';font-size:20px;color:var(--oro)}
-  .vip{display:inline-block;margin:2px auto 8px;font-family:'Anton';font-size:13px;letter-spacing:2px;
+  .vip-wrap{text-align:center;margin:2px 0 8px}
+  .vip{display:inline-block;max-width:100%;font-family:'Anton';font-size:13px;letter-spacing:2px;
     text-transform:uppercase;color:#2a1000;padding:6px 16px;border-radius:30px;
     background:linear-gradient(90deg,var(--oro),var(--fuego),var(--magenta));
     box-shadow:0 0 18px rgba(255,122,24,.6);white-space:nowrap}
@@ -185,7 +186,7 @@
   .btn-download{display:block;margin:26px auto 0;font-family:'Anton';font-size:18px;letter-spacing:2px;
     text-transform:uppercase;color:#062;background:linear-gradient(90deg,#5aff8a,#22d36f);border:none;
     border-radius:40px;padding:15px 34px;cursor:pointer;box-shadow:0 0 26px rgba(90,255,138,.55);transition:transform .2s}
-  .btn-download:hover{transform:scale(1.05)}
+  @media(hover:hover){.btn-download:hover{transform:scale(1.05)}}
   .btn-download:disabled{opacity:.6;cursor:default}
   .creditos{margin-top:22px;font-size:11px;letter-spacing:2px;color:#7a5c48;text-transform:uppercase}
 </style>
@@ -277,7 +278,7 @@
             <div class="evt">Quimera Tour</div>
             <div class="tour">✦ María Becerra ✦</div>
             <div class="fecha-big"><span class="d">19</span><span class="m">NOV</span></div>
-            <div><span class="vip">★ Invitada cumpleañera · Ultra VIP ★</span></div>
+            <div class="vip-wrap"><span class="vip" id="vip">★ Invitada cumpleañera · Ultra VIP ★</span></div>
             <div class="datos">
               <div class="fila"><span class="k">Artista</span><span class="v">María Becerra</span></div>
               <div class="fila"><span class="k">Lugar</span><span class="v">Movistar Arena · Bs. As.</span></div>
@@ -297,6 +298,12 @@
 </section>
 
 <script>
+  // en cada recarga arrancar siempre desde arriba (top 0)
+  if('scrollRestoration' in history){history.scrollRestoration='manual';}
+  window.scrollTo(0,0);
+  window.addEventListener('load',()=>window.scrollTo(0,0));
+  window.addEventListener('beforeunload',()=>window.scrollTo(0,0));
+
   // chispas
   (function(){
     const cont=document.getElementById('chispas');
@@ -377,12 +384,27 @@
     // revelar sección entrada (seguía bloqueada)
     document.getElementById('lockedNote').style.display='none';
     document.getElementById('ticketReveal').classList.add('show');
+    fitVip(); // ahora que es visible, ajustar el badge
   }
   pintar();
 
   document.getElementById('skip').onclick=desbloquear;
   document.getElementById('goTicket').onclick=()=>{
-    document.getElementById('ticketSection').scrollIntoView({behavior:'smooth'});
+    const html=document.documentElement;
+    const target=document.getElementById('ticketSection');
+    // desactivar el snap para que el scroll programático no rebote hacia atrás
+    html.style.scrollSnapType='none';
+    const y=target.getBoundingClientRect().top+window.scrollY;
+    window.scrollTo({top:y,behavior:'smooth'});
+    // reactivar el snap recién cuando terminó de llegar
+    let done=false;
+    const finish=()=>{if(done)return;done=true;html.style.scrollSnapType='y mandatory';};
+    if('onscrollend' in window){
+      window.addEventListener('scrollend',finish,{once:true});
+      setTimeout(finish,1400); // respaldo por si no dispara scrollend
+    }else{
+      setTimeout(finish,1000);
+    }
   };
 
   // abrir ticket + confeti
@@ -413,6 +435,18 @@
 
   // usar la imagen incrustada (data URI) => canvas sin "taint" para poder descargar
   if(window.POSTER){document.getElementById('posterReal').style.backgroundImage="url('"+window.POSTER+"')";}
+
+  // ajustar el tamaño de tipografía del badge VIP para que siempre entre centrado
+  function fitVip(){
+    const el=document.getElementById('vip');if(!el)return;
+    const avail=el.parentElement.clientWidth-2;
+    if(avail<=0)return; // aún oculto, se recalcula al revelar
+    let size=13;el.style.fontSize=size+'px';
+    while(el.scrollWidth>avail&&size>6){size-=0.5;el.style.fontSize=size+'px';}
+  }
+  window.addEventListener('load',fitVip);
+  window.addEventListener('resize',fitVip);
+  fitVip();
 
   // ===== descargar entrada como PNG =====
   document.getElementById('btnDownload').addEventListener('click',function(){
