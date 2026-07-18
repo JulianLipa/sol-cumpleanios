@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sol · Invitación secreta 🔒</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.13/dist/html-to-image.js"></script>
+<script src="poster.js"></script>
+<style>
+  :root{
+    --fuego:#ff7a18;--oro:#ffd36e;--magenta:#ff2e97;--rosa:#ff8ac4;
+    --negro:#0b0603;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth;scroll-snap-type:y mandatory}
+  body{background:var(--negro);color:#fff;font-family:'Poppins',sans-serif;overflow-x:hidden;position:relative}
+  section{scroll-snap-align:start;scroll-snap-stop:always}
+
+  /* chispas globales */
+  .chispas{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+  .chispa{position:absolute;bottom:-10px;border-radius:50%;background:var(--oro);
+    box-shadow:0 0 8px var(--fuego),0 0 14px var(--fuego);animation:subir linear infinite;opacity:.8}
+  @keyframes subir{0%{transform:translateY(0);opacity:0}10%{opacity:.9}90%{opacity:.7}100%{transform:translateY(-110vh) scale(.2);opacity:0}}
+
+  .progreso{position:fixed;top:0;left:0;height:5px;width:0;z-index:99;
+    background:linear-gradient(90deg,var(--magenta),var(--fuego),var(--oro));box-shadow:0 0 12px var(--fuego)}
+
+  section{position:relative;z-index:2}
+
+  /* fondo ambiente (póster oculto con blur fuerte, no se reconoce) */
+  .amb{position:absolute;inset:-20%;background:url('MB-27-mobile.jpg') center 30%/cover no-repeat;
+    filter:blur(55px) brightness(.5) saturate(1.6);transform:scale(1.3);z-index:0;will-change:transform}
+
+  /* HERO */
+  .hero{height:100svh;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;overflow:hidden;
+    background:radial-gradient(circle at 50% 35%,rgba(255,122,24,.5),transparent 60%),
+      radial-gradient(circle at 50% 90%,rgba(255,46,151,.35),transparent 55%),#0b0603}
+  .hero-veil{position:absolute;inset:0;z-index:1;
+    background:linear-gradient(180deg,rgba(11,6,3,.35),rgba(11,6,3,.1) 45%,rgba(11,6,3,.95))}
+  .hero-content{position:relative;z-index:2;padding:0 22px}
+  .kicker{font-weight:600;letter-spacing:6px;font-size:12px;text-transform:uppercase;color:var(--oro);
+    text-shadow:0 0 12px var(--fuego);opacity:0;transform:translateY(20px);animation:ap 1s .3s forwards}
+  .hero h1{font-family:'Anton';font-size:clamp(56px,21vw,120px);line-height:.9;letter-spacing:2px;
+    text-transform:uppercase;margin:10px 0;
+    background:linear-gradient(180deg,#fff,var(--oro) 45%,var(--fuego));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 4px 24px rgba(255,122,24,.7));
+    opacity:0;transform:translateY(30px) scale(.9);animation:ap 1.1s .55s cubic-bezier(.2,.8,.2,1) forwards}
+  .hero .sub{font-weight:600;font-size:clamp(15px,4.5vw,20px);letter-spacing:2px;color:#fff;
+    opacity:0;transform:translateY(20px);animation:ap 1s .9s forwards}
+  .hero .lock{margin-top:22px;font-size:14px;letter-spacing:3px;text-transform:uppercase;color:var(--rosa);
+    opacity:0;animation:ap 1s 1.2s forwards}
+  .scroll-hint{position:absolute;bottom:26px;left:0;right:0;z-index:2;font-size:11px;letter-spacing:3px;
+    text-transform:uppercase;color:#ffd9b0;opacity:0;animation:ap 1s 1.7s forwards}
+  .scroll-hint .flecha{display:block;margin:8px auto 0;width:20px;height:20px;
+    border-right:3px solid var(--oro);border-bottom:3px solid var(--oro);transform:rotate(45deg);animation:rebote 1.6s infinite}
+  @keyframes rebote{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(6px,6px)}}
+  @keyframes ap{to{opacity:1;transform:none}}
+
+  /* intriga */
+  .bloque{height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:70px 26px;overflow:hidden}
+  .reveal{opacity:0;transform:translateY(50px);transition:opacity .9s ease,transform 1s cubic-bezier(.2,.8,.2,1)}
+  .reveal.visible{opacity:1;transform:none}
+  .frase-chica{font-weight:300;letter-spacing:4px;text-transform:uppercase;font-size:12px;color:var(--rosa);margin-bottom:14px}
+  .frase-grande{font-family:'Anton';font-size:clamp(38px,12vw,72px);line-height:1;text-transform:uppercase;
+    background:linear-gradient(120deg,var(--oro),var(--fuego),var(--magenta));
+    -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 16px rgba(255,122,24,.4))}
+  .emoji{font-size:38px;display:block;margin-bottom:10px}
+
+  /* ===== QUIZ ===== */
+  .quiz{height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 22px;text-align:center;position:relative;overflow:hidden}
+  .quiz .amb{filter:blur(60px) brightness(.4) saturate(1.6)}
+  .quiz-inner{position:relative;z-index:2;width:100%;max-width:440px}
+  .quiz-tit{font-family:'Anton';font-size:clamp(26px,8vw,42px);text-transform:uppercase;
+    background:linear-gradient(120deg,var(--oro),var(--magenta));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .quiz-sub{font-size:13px;color:#ffd9b0;letter-spacing:1px;margin:6px 0 22px}
+  .dots{display:flex;gap:10px;justify-content:center;margin-bottom:24px}
+  .dot{width:34px;height:6px;border-radius:6px;background:rgba(255,211,110,.25);transition:.4s}
+  .dot.done{background:linear-gradient(90deg,var(--fuego),var(--oro));box-shadow:0 0 10px var(--fuego)}
+  .card{background:linear-gradient(160deg,rgba(42,18,6,.9),rgba(20,9,11,.92));
+    border:1px solid rgba(255,211,110,.3);border-radius:22px;padding:26px 20px;
+    box-shadow:0 20px 60px rgba(255,46,151,.2)}
+  .card.shake{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+  .q-num{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--rosa);margin-bottom:8px}
+  .q-text{font-weight:700;font-size:19px;line-height:1.4;margin-bottom:20px}
+  .opts{display:flex;flex-direction:column;gap:11px}
+  .opt{background:rgba(255,255,255,.06);border:1px solid rgba(255,211,110,.25);color:#fff;
+    font-family:inherit;font-size:15px;font-weight:500;padding:14px 16px;border-radius:14px;cursor:pointer;
+    transition:.2s;text-align:left}
+  .opt:hover{background:rgba(255,122,24,.18);border-color:var(--oro)}
+  .opt.correct{background:linear-gradient(90deg,rgba(90,255,138,.3),rgba(34,211,111,.25));border-color:#5aff8a;color:#eafff0}
+  .opt.wrong{background:rgba(255,46,80,.25);border-color:#ff5069}
+  .opt:disabled{cursor:default}
+  .feedback{margin-top:16px;font-size:13px;min-height:18px;color:var(--oro);font-weight:600}
+  .skip{display:none;margin:18px auto 0;background:none;border:none;color:#b98a6a;font-family:inherit;
+    font-size:12px;letter-spacing:1px;text-decoration:underline;cursor:pointer;opacity:.8}
+  .skip.show{display:block}
+
+  /* pantalla desbloqueo dentro del quiz */
+  .unlock{display:none;text-align:center}
+  .unlock.show{display:block;animation:ap .8s forwards}
+  .unlock .emoji{font-size:56px}
+  .unlock h3{font-family:'Anton';font-size:clamp(28px,9vw,46px);text-transform:uppercase;margin:6px 0 4px;
+    background:linear-gradient(120deg,var(--oro),var(--fuego));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .unlock p{color:#ffd9b0;font-size:14px;margin-bottom:22px}
+  .btn-open{display:inline-block;font-family:'Anton';font-size:20px;letter-spacing:2px;text-transform:uppercase;
+    color:#2a1000;background:linear-gradient(90deg,var(--oro),var(--fuego));border:none;border-radius:40px;
+    padding:16px 34px;cursor:pointer;box-shadow:0 0 26px rgba(255,122,24,.6);animation:pulso 1.8s infinite}
+  @keyframes pulso{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+  /* ===== ENTRADA (revelación final) ===== */
+  .ticket-section{padding:60px 20px 70px;text-align:center;min-height:100svh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .locked-note{color:#7a5c48;font-size:13px;letter-spacing:2px;text-transform:uppercase}
+  .locked-note .cerr{font-size:40px;display:block;margin-bottom:12px}
+  #ticketReveal{display:none}
+  #ticketReveal.show{display:block;animation:ap .8s forwards}
+  .ticket-titulo{font-family:'Anton';font-size:clamp(28px,9vw,48px);text-transform:uppercase;
+    background:linear-gradient(120deg,var(--oro),var(--magenta));
+    -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px}
+  .ticket-hint{font-size:12px;letter-spacing:2px;color:var(--rosa);text-transform:uppercase;margin-bottom:30px;animation:latir 1.8s infinite}
+  @keyframes latir{0%,100%{opacity:.6}50%{opacity:1}}
+
+  .ticket-scene{perspective:1400px;display:flex;justify-content:center}
+  .ticket{position:relative;width:min(84vw,336px);cursor:pointer}
+  .ticket .cara{border-radius:22px;overflow:hidden;position:relative;
+    display:flex;flex-direction:column;
+    background:linear-gradient(160deg,#2a1206,#14090b);border:1px solid rgba(255,211,110,.35);
+    box-shadow:0 20px 60px rgba(255,46,151,.25)}
+  .tapa{position:absolute;inset:0;z-index:5;border-radius:22px;overflow:hidden;transform-origin:top center;
+    transition:transform 1.1s cubic-bezier(.6,0,.15,1),box-shadow .6s;
+    background:linear-gradient(160deg,#3a1a08,#160a0c);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid rgba(255,211,110,.4);backface-visibility:hidden}
+  .tapa .sello{width:92px;height:92px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,var(--oro),var(--fuego) 70%,var(--magenta));
+    display:flex;align-items:center;justify-content:center;font-size:40px;
+    box-shadow:0 0 30px var(--fuego),0 8px 20px rgba(0,0,0,.5);animation:pulso 2s infinite}
+  .tapa .toca{margin-top:18px;font-weight:700;letter-spacing:3px;text-transform:uppercase;font-size:13px;color:#fff}
+  .tapa .marca{position:absolute;top:16px;left:0;right:0;font-family:'Anton';font-size:26px;letter-spacing:4px;color:var(--oro)}
+  .ticket.abierto .tapa{transform:rotateX(-168deg);box-shadow:0 30px 40px rgba(0,0,0,.6)}
+
+  /* imagen real del póster: SOLO acá se revela (banner de tamaño fijo) */
+  .poster-real{width:100%;aspect-ratio:1080/917;flex:none;display:block;
+    background-image:url('MB-27-mobile.jpg');background-size:cover;background-position:center top;background-repeat:no-repeat;
+    -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)}
+  .interior{padding:0 18px 16px;position:relative;margin-top:-22px;z-index:2;
+    flex:1;display:flex;flex-direction:column;overflow:visible}
+  .interior .evt{font-family:'Anton';font-size:26px;text-transform:uppercase;line-height:1;
+    background:linear-gradient(120deg,var(--oro),var(--fuego));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .interior .tour{font-family:'Poppins';font-weight:800;font-size:14px;color:var(--rosa);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px}
+  .fecha-big{margin:2px 0 6px;display:flex;align-items:baseline;justify-content:center;gap:7px}
+  .fecha-big .d{font-family:'Anton';font-size:42px;color:#fff;text-shadow:0 0 20px var(--magenta)}
+  .fecha-big .m{font-family:'Anton';font-size:20px;color:var(--oro)}
+  .vip{display:inline-block;margin:2px auto 8px;font-family:'Anton';font-size:13px;letter-spacing:2px;
+    text-transform:uppercase;color:#2a1000;padding:6px 16px;border-radius:30px;
+    background:linear-gradient(90deg,var(--oro),var(--fuego),var(--magenta));
+    box-shadow:0 0 18px rgba(255,122,24,.6);white-space:nowrap}
+  .fila{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0;
+    border-bottom:1px dashed rgba(255,211,110,.2);text-align:left}
+  .fila .k{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--rosa);opacity:.8;flex:none}
+  .fila .v{font-weight:700;font-size:13px;color:#fff;text-align:right;line-height:1.2}
+  .interior .datos{margin-top:2px}
+  .para{margin-top:auto;padding-top:10px;font-size:12px;color:#ffe4cf}
+  .para b{color:var(--oro);font-size:15px}
+  .barcode{margin-top:10px;height:42px;
+    background:repeating-linear-gradient(90deg,#fff 0 3px,transparent 3px 4px,#fff 4px 5px,transparent 5px 9px);opacity:.85}
+  .cod{font-size:9px;letter-spacing:3px;color:#ffd9b0;margin-top:5px;text-transform:uppercase}
+
+  .confeti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;display:none}
+  .confeti.on{display:block}
+  .conf{position:absolute;top:-20px;width:9px;height:14px;opacity:.95;animation:caer linear forwards}
+  @keyframes caer{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  .btn-download{display:block;margin:26px auto 0;font-family:'Anton';font-size:18px;letter-spacing:2px;
+    text-transform:uppercase;color:#062;background:linear-gradient(90deg,#5aff8a,#22d36f);border:none;
+    border-radius:40px;padding:15px 34px;cursor:pointer;box-shadow:0 0 26px rgba(90,255,138,.55);transition:transform .2s}
+  .btn-download:hover{transform:scale(1.05)}
+  .btn-download:disabled{opacity:.6;cursor:default}
+  .creditos{margin-top:22px;font-size:11px;letter-spacing:2px;color:#7a5c48;text-transform:uppercase}
+</style>
+</head>
+<body>
+
+<div class="progreso" id="progreso"></div>
+<div class="chispas" id="chispas"></div>
+<div class="confeti" id="confeti"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="amb" id="heroAmb"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-content">
+    <div class="kicker">Invitación secreta</div>
+    <h1>Sol<br>Lorusso</h1>
+    <div class="sub">¡Feliz cumple 13! 🎂</div>
+    <div class="lock">🔒 Algo enorme te espera</div>
+  </div>
+  <div class="scroll-hint">Deslizá<span class="flecha"></span></div>
+</section>
+
+<!-- intriga -->
+<section class="bloque">
+  <div class="reveal">
+    <span class="emoji">🎁</span>
+    <div class="frase-chica">Tu regalo es una salida</div>
+    <div class="frase-grande">Pero primero...</div>
+  </div>
+</section>
+
+<section class="bloque">
+  <div class="reveal">
+    <span class="emoji">🧠✨</span>
+    <div class="frase-chica">Solo una verdadera fan lo desbloquea</div>
+    <div class="frase-grande">3 preguntas<br>y es tuya</div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="quiz" id="quizSection">
+  <div class="amb"></div>
+  <div class="quiz-inner">
+    <div id="quizGame">
+      <div class="quiz-tit">El desafío 🔥</div>
+      <div class="quiz-sub">Respondé las 3 y abrí tu invitación</div>
+      <div class="dots">
+        <div class="dot" id="d0"></div><div class="dot" id="d1"></div><div class="dot" id="d2"></div>
+      </div>
+      <div class="card" id="quizCard">
+        <div class="q-num" id="qNum"></div>
+        <div class="q-text" id="qText"></div>
+        <div class="opts" id="qOpts"></div>
+        <div class="feedback" id="qFeedback"></div>
+      </div>
+      <button class="skip" id="skip">¿No sabés? Abrí igual tu invitación →</button>
+    </div>
+
+    <div class="unlock" id="unlock">
+      <span class="emoji">🔓✨</span>
+      <h3>¡Sos una crack!</h3>
+      <p>Desbloqueaste tu invitación.</p>
+      <button class="btn-open" id="goTicket">Abrir la invitación →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ENTRADA -->
+<section class="ticket-section" id="ticketSection">
+  <div class="locked-note" id="lockedNote">
+    <span class="cerr">🔒</span>
+    Completá el desafío para revelar tu entrada
+  </div>
+
+  <div id="ticketReveal">
+    <div class="ticket-titulo">Tu entrada 🎫</div>
+    <div class="ticket-hint">👆 Tocá para abrirla</div>
+    <div class="ticket-scene">
+      <div class="ticket" id="ticket">
+        <div class="tapa">
+          <div class="marca">???</div>
+          <div class="sello">🎟️</div>
+          <div class="toca">Tocar para revelar</div>
+        </div>
+        <div class="cara">
+          <div class="poster-real" id="posterReal" role="img" aria-label="María Becerra - Quimera Tour"></div>
+          <div class="interior">
+            <div class="evt">Quimera Tour</div>
+            <div class="tour">✦ María Becerra ✦</div>
+            <div class="fecha-big"><span class="d">19</span><span class="m">NOV</span></div>
+            <div><span class="vip">★ Invitada cumpleañera · Ultra VIP ★</span></div>
+            <div class="datos">
+              <div class="fila"><span class="k">Artista</span><span class="v">María Becerra</span></div>
+              <div class="fila"><span class="k">Lugar</span><span class="v">Movistar Arena · Bs. As.</span></div>
+              <div class="fila"><span class="k">Puertas · Show</span><span class="v">19:00 · 21:00 hs</span></div>
+              <div class="fila"><span class="k">Zona · Sector</span><span class="v">Platea Baja · 103</span></div>
+              <div class="fila"><span class="k">Fila · Asiento</span><span class="v">K · 4</span></div>
+            </div>
+            <div class="para">A nombre de <b>Sol Lorusso 💜</b></div>
+            <div class="barcode"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="btn-download" id="btnDownload">⬇ Descargar entrada</button>
+    <div class="creditos">Movistar Arena · Quimera Tour · 19 NOV</div>
+  </div>
+</section>
+
+<script>
+  // chispas
+  (function(){
+    const cont=document.getElementById('chispas');
+    for(let i=0;i<38;i++){
+      const s=document.createElement('div');s.className='chispa';
+      s.style.left=Math.random()*100+'vw';
+      const dur=5+Math.random()*8;s.style.animationDuration=dur+'s';s.style.animationDelay=(-Math.random()*dur)+'s';
+      const sz=2+Math.random()*4;s.style.width=sz+'px';s.style.height=sz+'px';
+      if(Math.random()>.5){s.style.background='var(--magenta)';s.style.boxShadow='0 0 8px var(--magenta)';}
+      cont.appendChild(s);
+    }
+  })();
+
+  // reveal
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')}),{threshold:.2});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // parallax + progreso
+  const heroAmb=document.getElementById('heroAmb');
+  const prog=document.getElementById('progreso');
+  function onScroll(){
+    const y=window.scrollY;
+    heroAmb.style.transform='scale(1.3) translateY('+(y*0.3)+'px)';
+    const h=document.documentElement.scrollHeight-window.innerHeight;
+    prog.style.width=(y/h*100)+'%';
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+  // ===== QUIZ (pistas de fan, sin nombrarla) =====
+  const preguntas=[
+    {q:"¿Con qué apodo tierno se la conoce en Argentina?",
+     opts:["La Nena de Argentina","La Reina del Sur","La Joaqui","La Princesa Pop"],c:0,
+     ok:"¡Obvio! 🇦🇷"},
+    {q:"¿De qué lugar del conurbano bonaerense es?",
+     opts:["Rosario","Quilmes","La Plata","Morón"],c:1,
+     ok:"¡Correcto, de Quilmes! 🔥"},
+    {q:"¿Cuál de estos hits es suyo?",
+     opts:["Tusa","Hawái","Automático","Ella Baila Sola"],c:2,
+     ok:"¡Un temazo! 🎶"}
+  ];
+  let idx=0,ok=0;
+  const qNum=document.getElementById('qNum'),qText=document.getElementById('qText'),
+        qOpts=document.getElementById('qOpts'),qFb=document.getElementById('qFeedback'),
+        card=document.getElementById('quizCard');
+
+  function pintar(){
+    const p=preguntas[idx];
+    qNum.textContent='Pregunta '+(idx+1)+' de 3';
+    qText.textContent=p.q;qFb.textContent='';qOpts.innerHTML='';
+    p.opts.forEach((t,i)=>{
+      const b=document.createElement('button');b.className='opt';b.textContent=t;
+      b.onclick=()=>elegir(b,i,p);
+      qOpts.appendChild(b);
+    });
+  }
+  function elegir(btn,i,p){
+    if(i===p.c){
+      btn.classList.add('correct');
+      [...qOpts.children].forEach(b=>b.disabled=true);
+      qFb.textContent=p.ok;
+      document.getElementById('d'+idx).classList.add('done');
+      ok++;
+      setTimeout(()=>{
+        idx++;
+        if(idx<preguntas.length)pintar();
+        else desbloquear();
+      },850);
+    }else{
+      btn.classList.add('wrong');btn.disabled=true;
+      card.classList.remove('shake');void card.offsetWidth;card.classList.add('shake');
+      qFb.textContent='¡Esa no! Probá otra 😉';
+      document.getElementById('skip').classList.add('show'); // nunca queda trabada
+    }
+  }
+  function desbloquear(){
+    document.getElementById('quizGame').style.display='none';
+    document.getElementById('unlock').classList.add('show');
+    // revelar sección entrada (seguía bloqueada)
+    document.getElementById('lockedNote').style.display='none';
+    document.getElementById('ticketReveal').classList.add('show');
+  }
+  pintar();
+
+  document.getElementById('skip').onclick=desbloquear;
+  document.getElementById('goTicket').onclick=()=>{
+    document.getElementById('ticketSection').scrollIntoView({behavior:'smooth'});
+  };
+
+  // abrir ticket + confeti
+  const ticket=document.getElementById('ticket');
+  let abierto=false;
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#ticket'))return;
+    abierto=!abierto;ticket.classList.toggle('abierto',abierto);
+    if(abierto)lanzarConfeti();
+  });
+  function lanzarConfeti(n){
+    n=n||90;
+    const cont=document.getElementById('confeti');cont.classList.add('on');
+    const cols=['#ff7a18','#ffd36e','#ff2e97','#ff8ac4','#fff','#5aff8a'];
+    for(let i=0;i<n;i++){
+      const c=document.createElement('div');c.className='conf';
+      c.style.left=Math.random()*100+'vw';c.style.background=cols[Math.floor(Math.random()*cols.length)];
+      c.style.animationDuration=(2.5+Math.random()*2.5)+'s';c.style.animationDelay=(Math.random()*.6)+'s';
+      c.style.transform='rotate('+Math.random()*360+'deg)';
+      if(Math.random()>.6)c.style.borderRadius='50%';
+      cont.appendChild(c);setTimeout(()=>c.remove(),5200);
+    }
+    setTimeout(()=>cont.classList.remove('on'),5400);
+  }
+
+  // explosión de confetti de bienvenida por su cumple 🎉
+  window.addEventListener('load',()=>lanzarConfeti(160));
+
+  // usar la imagen incrustada (data URI) => canvas sin "taint" para poder descargar
+  if(window.POSTER){document.getElementById('posterReal').style.backgroundImage="url('"+window.POSTER+"')";}
+
+  // ===== descargar entrada como PNG =====
+  document.getElementById('btnDownload').addEventListener('click',function(){
+    const btn=this;
+    const cara=document.querySelector('#ticket .cara');
+    if(typeof htmlToImage==='undefined'){
+      alert('Para descargar la entrada, abrí la página con conexión a internet.');return;
+    }
+    const txt=btn.textContent;btn.disabled=true;btn.textContent='Generando...';
+    // html-to-image usa el render nativo => respeta máscara, degradados y fuentes (idéntico a pantalla)
+    htmlToImage.toPng(cara,{pixelRatio:3,cacheBust:true,backgroundColor:'#14090b'}).then(dataUrl=>{
+      const a=document.createElement('a');
+      a.download='entrada-sol-maria-becerra.png';
+      a.href=dataUrl;
+      a.click();
+      btn.disabled=false;btn.textContent=txt;
+    }).catch(()=>{btn.disabled=false;btn.textContent=txt;alert('No se pudo generar la imagen.');});
+  });
+</script>
+</body>
+</html>
