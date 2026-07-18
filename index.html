@@ -151,7 +151,7 @@
 
   /* imagen real del póster: SOLO acá se revela (banner de tamaño fijo) */
   .poster-real{width:100%;aspect-ratio:1080/917;flex:none;display:block;
-    background-image:url('MB-27-mobile.jpg');background-size:cover;background-position:center top;background-repeat:no-repeat;
+    object-fit:cover;object-position:center top;
     -webkit-mask-image:linear-gradient(180deg,#000 80%,transparent);mask-image:linear-gradient(180deg,#000 80%,transparent)}
   .interior{padding:0 18px 16px;position:relative;margin-top:-22px;z-index:2;
     flex:1;display:flex;flex-direction:column;overflow:visible}
@@ -273,7 +273,7 @@
           <div class="toca">Tocar para revelar</div>
         </div>
         <div class="cara">
-          <div class="poster-real" id="posterReal" role="img" aria-label="María Becerra - Quimera Tour"></div>
+          <img class="poster-real" id="posterReal" src="MB-27-mobile.jpg" alt="María Becerra - Quimera Tour">
           <div class="interior">
             <div class="evt">Quimera Tour</div>
             <div class="tour">✦ María Becerra ✦</div>
@@ -433,8 +433,8 @@
   // explosión de confetti de bienvenida por su cumple 🎉
   window.addEventListener('load',()=>lanzarConfeti(160));
 
-  // usar la imagen incrustada (data URI) => canvas sin "taint" para poder descargar
-  if(window.POSTER){document.getElementById('posterReal').style.backgroundImage="url('"+window.POSTER+"')";}
+  // usar la imagen incrustada (data URI) => se incrusta de forma confiable en la descarga (iOS incluido)
+  if(window.POSTER){document.getElementById('posterReal').src=window.POSTER;}
 
   // ajustar el tamaño de tipografía del badge VIP para que siempre entre centrado
   function fitVip(){
@@ -456,14 +456,19 @@
       alert('Para descargar la entrada, abrí la página con conexión a internet.');return;
     }
     const txt=btn.textContent;btn.disabled=true;btn.textContent='Generando...';
+    const opts={pixelRatio:3,cacheBust:true,backgroundColor:'#14090b'};
     // html-to-image usa el render nativo => respeta máscara, degradados y fuentes (idéntico a pantalla)
-    htmlToImage.toPng(cara,{pixelRatio:3,cacheBust:true,backgroundColor:'#14090b'}).then(dataUrl=>{
-      const a=document.createElement('a');
-      a.download='entrada-sol-maria-becerra.png';
-      a.href=dataUrl;
-      a.click();
-      btn.disabled=false;btn.textContent=txt;
-    }).catch(()=>{btn.disabled=false;btn.textContent=txt;alert('No se pudo generar la imagen.');});
+    // Safari/iOS suele fallar la 1ª pasada (imagen en blanco), por eso "calentamos" con un par de renders previos
+    htmlToImage.toPng(cara,opts)
+      .then(()=>htmlToImage.toPng(cara,opts))
+      .then(()=>htmlToImage.toPng(cara,opts))
+      .then(dataUrl=>{
+        const a=document.createElement('a');
+        a.download='entrada-sol-maria-becerra.png';
+        a.href=dataUrl;
+        a.click();
+        btn.disabled=false;btn.textContent=txt;
+      }).catch(()=>{btn.disabled=false;btn.textContent=txt;alert('No se pudo generar la imagen.');});
   });
 </script>
 </body>
